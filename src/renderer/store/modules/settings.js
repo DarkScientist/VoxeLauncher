@@ -8,8 +8,8 @@ export default {
     state() {
         return {
             rootPath: paths.join(remote.app.getPath('appData'), '.launcher'),
-            default: 'semantic',
-            theme: 'semantic',
+            default: 'material',
+            theme: 'material',
             themes: [], // todo... I think we need a more generic way... 
         }
     },

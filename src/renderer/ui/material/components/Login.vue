@@ -74,15 +74,17 @@
             login () {
                 this.logining = true
                 this.$store.dispatch('auth/login',{ 
-                    account: this.account,
-                    password: this.password,
-                    mode: this.mode,
+                    account: this.user.offlineUsername === "" ? this.user.onlineEmail : this.user.offlineUsername,
+                    password: this.user.onlineEmail,
+                    mode: this.activeTab === 'tab2' ? 'mojang' : 'offline',
                     clientToken: this.clientToken
                 }).then((result) => {
                         this.logining = false
                         this.showSnackbar("Logined", () => { this.dialog = false; })
                         this.$emit('logined')
                     }, err => {
+                        console.log(err)
+                        this.showSnackbar("Somethings is going wrong, please check username and password", () => {})
                         this.logining = false
                     })
             },
@@ -106,8 +108,11 @@
                 this.snackbar.status = true
                 if (this.snackTimer) clearTimeout(this.snackTimer)
                 this.snackCb = onHiden;
-                this.snackTimer = setTimeout(() => { this.snackbar = false, onHiden() }, 1000)
+                this.snackTimer = setTimeout(() => { this.snackbar.status = false, onHiden() }, 1000)
             },
+            ...mapMutations('auth', [
+                'select'
+            ])
         }
     }
 </script>
