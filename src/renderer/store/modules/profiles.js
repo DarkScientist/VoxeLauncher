@@ -8,19 +8,13 @@ import modelModpack from './models/modpack'
 const PROFILE_NAME = 'profile.json'
 const PROFILES_NAEM = 'profiles.json'
 
-function parseProfile(content) {
-    return {
-        id: content.id,
-        type: content.type,
-        name: content.name,
-        version: content.version,
-        resourcepacks: content.resourcepacks || [],
-        mods: content.mods || [],
-        resolution: content.resolution || [800, 400],
-        java: content.java,
-        vmOptions: content.vmOptions,
-        mcOptions: content.mcOptions,
-    }
+function regulize(content) {
+    content.resourcepacks = content.resourcepacks || []
+    content.resolution = content.resolution || [800, 400]
+    content.mods = content.mods || []
+    content.vmOptions = content.vmOptions || []
+    content.mcOptions = content.mcOptions || []
+    return content
 }
 
 export default {
@@ -30,6 +24,13 @@ export default {
     },
     getters: {
         ...singleSelect.getters,
+        errors(states, getters) {
+            if (getters.selectedKey !== '') {
+                const get = getters[`${getters.selectedKey}/errors`]
+                if (get) return get
+            }
+            return []
+        },
     },
     mutations: {
         ...singleSelect.mutations,
@@ -43,11 +44,12 @@ export default {
                         fallback: {},
                         encoding: 'json',
                     }, { root: true })
-                        .then(object => parseProfile(object))
+                        .then(regulize)
                         .then(profile => [file, profile]))))
                 .then((promises) => {
                     for (const [id, profile] of promises) {
-                        context.commit('add', { id, module: mixin(modelModpack, profile) })
+                        const model = profile.type === 'modpack' ? modelModpack : modelServer
+                        context.commit('add', { id, module: mixin(model, profile) })
                     }
                 })
                 .then(() => context.dispatch('readFile', { path: 'profiles.json', fallback: {}, encoding: 'json' }, { root: true })
@@ -70,7 +72,8 @@ export default {
             } else {
                 const [, profileId, action] = path
                 const targetPath = `profiles/${profileId}/${PROFILE_NAME}`
-                context.dispatch('writeFile', { path: targetPath, data: context.state[profileId] }, { root: true })
+                context.dispatch(`${profileId}/save`)
+                    .then(data => context.dispatch('writeFile', { path: targetPath, data }, { root: true }))
             }
         },
         create(context, {
@@ -78,24 +81,23 @@ export default {
             option,
         }) {
             const id = uuid()
-            console.log(`create ${id}: ${type}`)
+            console.log(`create ${id}: ${type} with`)
             if (type === 'server') {
                 context.commit('add', { id, module: mixin(modelServer, option) })
             } else if (type === 'modpack') {
-                option.name = 'New Modpack'
-                option.author = context.rootGetters['auth/info'].selectedProfile.name
-                option.description = 'no description yet!'
                 context.commit('add', { id, module: mixin(modelModpack, option) })
             }
             return id;
         },
         delete(context, payload) {
-            console.log(`delete ${payload}`)
             context.commit('remove', payload)
             return context.dispatch('deleteFolder', { path: `profiles/${payload}` }, { root: true })
         },
         select(context, profileId) {
             if (context.getters.selectedKey !== profileId) context.commit('select', profileId)
+        },
+        createAndSelect(context, payload) {
+            return context.dispatch('create', payload).then(id => context.commit('select', id))
         },
     },
 }

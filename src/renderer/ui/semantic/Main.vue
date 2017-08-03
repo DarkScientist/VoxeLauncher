@@ -1,179 +1,202 @@
 <template>
     <div class="ui celled grid segment" style="margin:0;">
         <div class="moveable black row">
-            <div class="four wide center aligned column">
+            <div class="four wide center aligned middle aligned column">
                 <h1 class="inverted ui header">
                     ILauncher
                 </h1>
             </div>
-            <div class="ten wide column">
+            <div class="ten wide column ">
                 <div class="ui breadcrumb">
                     <a class="section">
                         <div class="ui inverted circular button non-moveable" @click="unselect">Home</div>
                     </a>
-                    <span v-if="selecting">
+                    <span v-if="isSelecting">
                         <i class="right chevron inverted icon divider" style="color:white"></i>
                         <a class="section">
-                            <div class="ui inverted circular button non-moveable">{{selectedProfile.name}}</div>
+                            <div class="ui inverted circular  button non-moveable">
+                                {{selectedProfile.name}}
+                            </div>
                         </a>
                     </span>
                 </div>
+                <div class="ui inverted circular right floated button non-moveable">Help</div>
             </div>
-            <div class="two wide center aligned column">
-                <button class="ui inverted circular button non-moveable" @click="showLogin">{{playerName}}</button>
+            <div class="two wide center aligned middle aligned column">
+                <div id="userDropdown" class="non-moveable ui inverted pointing dropdown">
+                    <i class="user icon"></i>
+                    {{username}}
+                    <i class="dropdown icon"></i>
+                    <div class="menu">
+                        <div class="item">
+                            <i class="id card outline icon"></i>Profile</div>
+                        <div class="item">
+                            <i class="sign out icon"></i>Logout</div>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="row" style="height:500px;">
             <div class="four wide middle aligned center aligned column">
-                <div class="ui header segment">{{playerName}}</div>
-                <!-- <skin-view width="1200" height="400"></skin-view> -->
-    
+                <!-- <skin-view width="1200" height="400"></skin-view>  -->
             </div>
             <div class="twelve wide column">
-                <div v-if="selecting">
-                    <profile-view :source='selectedProfile' :id="selectProfileID"></profile-view>
-                </div>
-                <div v-else>
-                    <div class="ui link cards">
-                        <profile-card class="profile" v-for="id in keys" :key="id" :id="id" :source='getByKey(id)' @select="selectProfile" @delete="showDelete"></profile-card>
-                    </div>
-    
-                </div>
+                <card-view ref='view' v-if="!isSelecting" @select="selectProfile" @delete="showModal('delete', { type: $event.source.type, id: $event.id })"></card-view>
+                <server-view ref='view' :id="selectedProfileID" :source="selectedProfile" v-else-if="selectedProfile.type==='server'"> </server-view>
+                <profile-view ref='view' :id="selectedProfileID" :source="selectedProfile" v-else> </profile-view>
             </div>
         </div>
         <div class="moveable black row" style="height:60px">
-            <div class="four wide center aligned column">
-                <div class="ui icon inverted button non-moveable">
+            <div class="four wide center aligned middle aligned column">
+                <div class="ui icon inverted button pointing dropdown non-moveable">
                     <i class="setting icon"></i>
+                    <div class="menu">
+                        <div class="item">
+                            <i class="id card outline icon"></i>
+                            Profile
+                        </div>
+                        <div class="item">
+                            <i class="sign out icon"></i>
+                            Logout
+                        </div>
+                    </div>
+                </div>
+                <div class="ui icon inverted button non-moveable" @click="refresh">
+                    <i class="refresh icon"></i>
                 </div>
             </div>
-            <div class="twelve wide column">
-                <div class="ui icon right floated circlar inverted button non-moveable" @click="createModpack">
-                    <i class="plus icon"></i>
-                    {{$t('profile.add.modpack')}}
-                </div>
-                <div class="ui icon right floated circlar inverted button non-moveable" @click="createServer">
-                    <i class="plus icon"></i>
-                    {{$t('profile.add.server')}}
-                </div>
+            <div class="twelve wide middle aligned column">
+                <span class="non-moveable ui inverted basic icon buttons">
+                    <div id="warningPopup" class="ui button">
+                        <i class="warning sign icon"></i> {{errorsCount}}
+                    </div>
+                    <div class="ui flowing popup top left transition hidden">
+                        <div class="ui middle aligned divided list" style="max-height:300px; min-width:300px; overflow:hidden">
+                            <div v-for="(moduleErr, index) in errors" :key='moduleErr' class="item">
+                                {{index}}
+                                <div class="ui middle aligned selection divided list">
+                                    <div v-for="err of moduleErr" :key="err" class="item">
+                                        <div class="item">
+                                            <i class="warning icon"></i> {{err}}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="ui button">
+                        <i class="tasks icon"></i> {{tasks.length}}
+                    </div>
+                </span>
+                <span v-if="!isSelecting">
+                    <div class="ui icon right floated  inverted button non-moveable" @click="create('profile')">
+                        <i class="plus icon"></i>
+                        {{$t('profile.add.modpack')}}
+                    </div>
+                    <div class="ui icon right floated  inverted button non-moveable" @click="create('server')">
+                        <i class="plus icon"></i>
+                        {{$t('profile.add.server')}}
+                    </div>
+                </span>
+                <span v-else>
+                    <div class="ui icon right floated inverted button non-moveable" @click="launch">
+                        &nbsp&nbsp&nbsp
+                        <i class="rocket icon"></i>
+                        {{$t('launch')}} &nbsp&nbsp&nbsp&nbsp
+                    </div>
+                </span>
             </div>
         </div>
-        <div id="login" class="ui basic modal" style="padding:0 20% 0 20%;">
-            <i class="close icon" v-if="this.$store.state.auth.authInfo !== undefined"></i>
-            <login @logined='onlogined'></login>
-        </div>
-        <div id="delete" class="ui small basic test modal transition hidden">
-            <i class="close icon"></i>
-            <div class="ui icon header">
-                <i class="archive icon"></i>
-                <p v-if="deleting!=''"> {{$t(`profile.delete.${deleting}`)}}</p>
-            </div>
-            <div class="content">
-                <p v-if="deleting!=''">{{$t(`profile.delete.${deleting}.description`)}}</p>
-            </div>
-            <div class="actions">
-                <div class="ui basic cancel inverted button">
-                    <i class="close icon"></i>{{$t('profile.delete.no')}}</div>
-                <div class="ui red basic inverted ok button">
-                    <i class="remove icon"></i>{{$t('profile.delete.yes')}}</div>
-            </div>
-        </div>
+        <login-modal ref="loginModal"></login-modal>
+        <profile-modal ref="profileModal" :defaultAuthor="username" @accept="createProfile({ type: 'modpack', option: $event })"></profile-modal>
+        <server-modal ref="serverModal" @accept="createProfile({ type: 'server', option: $event })"></server-modal>
+        <delete-modal ref="deleteModal" @accept="deleteProfile"></delete-modal>
     </div>
 </template>
 
 <script>
 require('static/semantic/dist/semantic.min.css')
 require('static/semantic/dist/semantic.min.js')
-import ProfileCard from './components/ProfileCard'
-import ProfileView from './components/ProfileView'
+
+import ProfileView from './components/profiles/ProfileView'
+import ServerView from './components/profiles/ServerView'
+
+import CardView from './components/CardView'
+
 import SkinView from './components/SkinView'
-import Login from './components/Login'
+
+import LoginModal from './components/modals/LoginModal'
+import ProfileModal from './components/modals/ProfileModal'
+import ServerModal from './components/modals/ServerModal'
+import DeleteModal from './components/modals/DeleteModal'
 
 import { mapMutations, mapState, mapActions, mapGetters } from 'vuex'
 
 export default {
-    data() {
-        return {
-            deleting: '',
-        }
+    components: {
+        ProfileView, ServerView, SkinView, CardView,
+        LoginModal, ServerModal, ProfileModal, DeleteModal,
     },
     computed: {
-        selecting() {
-            return this.selectProfileID != undefined && this.selectProfileID != '' && this.selectProfileID != null
-        },
         ...mapGetters('profiles', {
             'selectedProfile': 'selected',
-            'profiles': 'allStates',
-            'keys': 'allKeys',
-            'getByKey': 'getByKey',
-            'selectProfileID': 'selectedKey'
+            'selectedProfileID': 'selectedKey'
         }),
-        playerName() {
+        ...mapGetters(['errors', 'tasks', 'errorsCount']),
+        isSelecting() {
+            return this.selectedProfileID != undefined && this.selectedProfileID != '' && this.selectedProfileID != null
+        },
+        username() {
             return this.$store.state.auth.authInfo ? this.$store.state.auth.authInfo.selectedProfile.name : 'Steve';
         },
     },
     mounted(e) {
-        if (this.playerName === 'Steve') this.showLogin()
+        if (this.username === 'Steve') this.showLogin()
+        $('#userDropdown').dropdown(
+            {
+                on: 'hover',
+                action: function () {
+                    return false
+                }
+            }
+        )
+        $('#warningPopup').popup(
+            {
+                hoverable: true,
+                position: 'top left',
+                delay: {
+                    show: 300,
+                    hide: 800
+                },
+            }
+        )
+        console.log(this.errors)
     },
     methods: {
         ...mapActions('profiles', {
-            createProfile: 'create',
+            createProfile: 'createAndSelect',
             selectProfile: 'select',
             deleteProfile: 'delete',
         }),
-        ...mapMutations('profiles', {
-            unselect: 'unselect',
-        }),
-        showDelete(event) {
-            const self = this
-            this.deleting = event.source.type
-            this.$nextTick(() => {
-                $('#delete')
-                    .modal({
-                        blurring: true,
-                        onApprove($element) {
-                            self.deleteProfile(event.id)
-                            return true;
-                        },
-                        onDeny($element) {
-                        },
-                    })
-                    .modal('show')
-            })
+        ...mapActions(['launch']),
+        ...mapMutations('profiles', ['unselect']),
+        showModal(id, args) {
+            this.$refs[id + "Modal"].show(args)
         },
         showLogin() {
-            this.$nextTick(() => {
-                $('#login')
-                    .modal('setting', 'closable', false)
-                    .modal('refresh')
-                    .modal('setting', 'observeChanges', true)
-                    .modal({ blurring: true })
-                    .modal('show')
-            })
+            this.showModal('login')
         },
-        onlogined() {
-            this.$nextTick(() => {
-                $('#login').modal('hide')
-            })
+        create(type) {
+            this.showModal(type)
         },
-        createModpack() {
-            this.createProfile({ type: 'modpack', option: { author: this.playerName } })
-                .then(id => {
-                    this.selectProfile(id)
-                })
-        },
-        createServer() {
-            this.createProfile({ type: 'server', option: {} })
-                .then(id => {
-                    this.selectProfile(id)
-                })
+        refresh() {
+            this.$refs.view.refresh()
         }
     },
-    components: { ProfileCard, ProfileView, SkinView, Login }
 }
 </script>
 
-<style scoped>
+<style>
 .moveable {
     -webkit-app-region: drag
 }

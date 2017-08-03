@@ -4,8 +4,12 @@ const {
 const fs = require('fs')
 
 export default {
-    fetchServerStatus: ServerInfo.fetchServerStatus,
-    fetchServerIcon(serverInfo) {
-        
+    actions: {
+        ping({ host, port }) {
+            return ServerInfo.fetchServerStatusFrame({ host, port })
+        },
+        fetchServerIcon(serverInfo) {
+
+        },
     },
 }

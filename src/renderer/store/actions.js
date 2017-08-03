@@ -15,6 +15,7 @@ function write(path, data) {
 }
 export default {
     launch(context, payload) {
+        console.log('calling launch....')
         const profile = context.getters['profiles/selected'];
         const profileId = context.getters['profiles/selectedKey'];
         const auth = context.state.auth.authInfo;
@@ -33,13 +34,15 @@ export default {
             option.server = { ip: profile.host, port: profile.port };
         }
 
-
         return context.dispatch('query', {
             service: 'launcher',
             action: 'launch',
             payload: { auth, option },
         });
         // return ''
+    },
+    park(context, payload) {
+        
     },
     query(context, payload) {
         return launcher.query(payload.service, payload.action, payload.payload)
