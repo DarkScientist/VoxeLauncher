@@ -12,16 +12,29 @@
                 
             </mu-appbar>
         </mu-drawer>
-        
+        <!--
+        <mu-tooltip label="打印" 
+            :show="activeFloat" 
+            :trigger="this.$refs.createPackageButton" 
+            :touch="true" 
+            :verticalPosition='"bottom"' 
+            :horizontalPosition="'center'"
+        />
+        -->
+        <create v-if="inPage.createPackage">
+
+        </create>
         <div id="floatButton" v-if="showFloatButton">
-        
             <transition name="fade">
                 <div class="childFlatButtonGroup" :class="{'hidden': !activeFloat}">
-                    <mu-float-button class="childFlatButton" icon="add" mini />
-                    <mu-float-button class="childFlatButton" icon="add" mini />
-                </div>
-            </transition>        
-            <mu-float-button class="actionButton" @click="toggleButton" icon="add"/>
+                
+                    <mu-float-button @click="toggleCreatePage" ref="createPackageButton" class="childFlatButton" icon="create_new_folder" mini />
+                    <mu-float-button class="childFlatButton" icon="explore" mini />
+                </div> 
+            </transition>                           
+            <transition name="routeIcon">   
+                <mu-float-button class="actionButton" @click="toggleButton" icon="add" :class="{'active': activeFloat}"/>
+            </transition>   
         </div>
         <Login v-if="needLogin"></Login>
     </div>
@@ -37,6 +50,7 @@ Vue.use(MuseUI);
 require("muse-ui/dist/muse-ui.css")
 require("muse-ui/dist/muse-ui.js")
 import Login from './components/Login'
+import Create from './components/Create'
 import { mapMutations, mapState, mapActions, mapGetters } from 'vuex'
 
 export default {
@@ -47,7 +61,10 @@ export default {
             docked: true,
             needLogin: false,
             showFloatButton: true,
-            activeFloat: false
+            activeFloat: false,
+            inPage: {
+                createPackage: false
+            }
         }
     },
     computed: {
@@ -77,9 +94,19 @@ export default {
         },
         toggleButton() {
             this.activeFloat = !this.activeFloat;
+        },
+        toggleCreatePage() {
+            this.closeAllPage()
+            this.inPage.createPackage = true;
+        },
+        closeAllPage() {
+            for (const item of Object.keys(this.inPage)) {
+                this.inPage[item] = false;
+            }
+            this.openNav = false;
         }
     },
-    components: { Login }
+    components: { Login, Create }
 }
 </script>
 
@@ -111,18 +138,20 @@ export default {
         bottom: 18px;
         right: 32px;
         text-align: right;
-        z-index: 2;
+        z-index: 3;
     }
 
     .childFlatButtonGroup button:nth-child(1) {
         position: fixed;
         right: 40px;
         bottom: 100px;
+        z-index: 2;
     }
     .childFlatButtonGroup button:nth-child(2) {
         position: fixed;
         right: 40px;
         bottom: 160px;
+        z-index: 1;
     }
     .childFlatButtonGroup.hidden button {
         z-index: 1;
@@ -137,16 +166,22 @@ export default {
     }
 
     .fade-enter-active, .fade-leave-active {
-          transition: bottom .5s
+        transition: bottom .5s
     }
-    .fade-enter, .fade-leave-to /* .fade-leave-active in below version 2.1.8 */ {
+    .fade-enter, .fade-leave-to {
         opacity: 0
+    }
+    .active {
+        transition: all .3s;
+        transform: rotate(-45deg);
+        background-color: red;
     }
 </style>
 
 <style>
-    html {
-        font-family: Microsoft YaHei;
+    body {
+        font-family: Microsoft YaHei !important;
+        
     }
     #floatButton > .mu-float-button-mini {
         bottom: 8px;
