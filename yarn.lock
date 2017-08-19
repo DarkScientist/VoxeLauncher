@@ -8195,9 +8195,9 @@ tryit@^1.0.1:
   version "1.0.3"
   resolved "https://registry.yarnpkg.com/tryit/-/tryit-1.0.3.tgz#393be730a9446fd1ead6da59a014308f36c289cb"
 
-ts-minecraft@^0.4.3-beta:
-  version "0.4.3-beta"
-  resolved "https://registry.yarnpkg.com/ts-minecraft/-/ts-minecraft-0.4.3-beta.tgz#4c5c69bb185cd37537849e947f1f4f7ade1d9456"
+ts-minecraft@^0.6.0-beta:
+  version "0.6.0-beta"
+  resolved "https://registry.yarnpkg.com/ts-minecraft/-/ts-minecraft-0.6.0-beta.tgz#14ec60d40812c8a4e7298bfaa59b825a21042b2e"
   dependencies:
     adm-zip "^0.4.7"
     bytebuffer "^5.0.1"

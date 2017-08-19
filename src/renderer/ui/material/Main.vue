@@ -1,7 +1,7 @@
 <template>
     <div id="main">
         <mu-appbar title="Main" :zDepth="0" class="Appbar moveAble" :class="{'nav-hide': !openNav}">
-            <mu-icon-button @click="toggleNav" class="notMoveAble" icon="menu" slot="left" />
+            <mu-icon-button v-if="atMain" @click="toggleNav" class="notMoveAble" icon="menu" slot="left" />
             <mu-icon-button class="notMoveAble" icon="clear" slot="right" />
         </mu-appbar>
         <div>
@@ -12,17 +12,7 @@
                 
             </mu-appbar>
         </mu-drawer>
-        <!--
-        <mu-tooltip label="打印" 
-            :show="activeFloat" 
-            :trigger="this.$refs.createPackageButton" 
-            :touch="true" 
-            :verticalPosition='"bottom"' 
-            :horizontalPosition="'center'"
-        />
-        -->
         <create v-if="inPage.createPackage">
-
         </create>
         <div id="floatButton" v-if="showFloatButton">
             <transition name="fade">
@@ -68,6 +58,14 @@ export default {
         }
     },
     computed: {
+        atMain() {
+            for (const item of Object.keys(this.inPage)) {
+                if (this.inPage[item] == true) {
+                    return false;
+                }
+            }
+            return true;
+        },
         selecting() {
             return this.selectProfileID != undefined && this.selectProfileID != '' && this.selectProfileID != null
         },

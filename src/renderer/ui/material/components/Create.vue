@@ -9,7 +9,7 @@
             </div>
         </mu-paper>
         <div class="container">
-            <mu-stepper :activeStep="activeStep" orientation="vertical">
+            <mu-stepper orientation="vertical">
                 <mu-step>
                     <mu-step-label>
                         选择一个版本
@@ -18,6 +18,7 @@
                         <p>
                             从官方源选择一个版本来进行下一步
                         </p>
+                        <Version></Version>
                         <mu-raised-button label="下一步" @click="handleNext" primary/>
                     </mu-step-content>
                 </mu-step>
@@ -54,8 +55,29 @@
 </template>
 
 <script>
+    import { mapMutations, mapState, mapActions, mapGetters } from 'vuex'
+    import Version from './Select/Version'
     export default {
-        
+        data() {
+
+            return {
+                
+            }
+        },
+        computed: {
+            
+        },
+        methods: {
+            handleNext() {
+                console.log("next")
+            },
+            handlePrev() {
+
+            }
+        },
+        components: {
+            Version
+        }
     }    
 </script>
 
