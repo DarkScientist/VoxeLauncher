@@ -1,3 +1,4 @@
+import paths from 'path'
 export default {
     /**
      * Return the errros by module.
@@ -9,7 +10,7 @@ export default {
         for (const key in state) {
             if (state.hasOwnProperty(key)) {
                 const get = getters[`${key}/errors`]
-                if (get) {
+                if (get && get.length !== 0) {
                     errors[key] = get
                 }
             }
@@ -30,6 +31,8 @@ export default {
         return []
     },
     rootPath(state, getters) {
-        return state.settings.rootPath
+        return state.root
     },
+    path: (state, gets) => path => (path instanceof Array ?
+        paths.join(gets.rootPath, ...path) : paths.join(gets.rootPath, path)),
 }

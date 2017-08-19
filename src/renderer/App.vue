@@ -1,7 +1,9 @@
 <template>
-  <div id="app">
-    <component v-bind:is="theme">
-    </component>
+  <div id="app" @drop="ondrop">
+    <!-- <component v-bind:is="theme"> -->
+    <!-- </component> -->
+    <!-- <material></material> -->
+    <semantic></semantic>
   </div>
 </template>
 
@@ -12,22 +14,43 @@ import MaterialUi from './ui/material/Main'
 
 import { mapState } from 'vuex'
 export default {
-    computed: {
-      ...mapState('settings', ['theme'])
+  computed: {
+    ...mapState('settings', ['theme'])
+  },
+  mounted() {
+    let dragTimer;
+    const store = this.$store
+    $(document).on('dragover', function (e) {
+      e.preventDefault()
+      var dt = e.originalEvent.dataTransfer;
+      if (dt.types && (dt.types.indexOf ? dt.types.indexOf('Files') != -1 : dt.types.contains('Files'))) {
+        if (!store.state.dragover) store.commit('dragover', true);
+        window.clearTimeout(dragTimer);
+      }
+    });
+    $(document).on('dragleave', function (e) {
+      dragTimer = window.setTimeout(function () {
+        store.commit('dragover', false);
+      }, 25);
+    });
+  },
+  methods: {
+    ondrop(event) {
+      event.preventDefault()
+      this.$store.commit('dragover', false)
+      return false;
     },
-    mounted() {
-
-    },
-    components: {
-        semantic: SemanticUi,
-        material: MaterialUi,
-    }
+  },
+  components: {
+    semantic: SemanticUi,
+    material: MaterialUi,
+  }
 }
 </script>
 
 <style>
 #app {
-    height: 780px;
+  height: 780px;
 }
 
 .noselect {

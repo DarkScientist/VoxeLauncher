@@ -1,29 +1,35 @@
 import uuid from 'uuid'
-
-import mixin from '../mixin-state'
-import singleSelect from './models/single-select'
-import modelServer from './models/server'
-import modelModpack from './models/modpack'
+import { GameSetting } from 'ts-minecraft'
+import server from './profiles/server'
+import modpack from './profiles/modpack'
 
 const PROFILE_NAME = 'profile.json'
 const PROFILES_NAEM = 'profiles.json'
 
 function regulize(content) {
     content.resourcepacks = content.resourcepacks || []
-    content.resolution = content.resolution || [800, 400]
+    content.resolution = content.resolution || { width: 800, height: 400 }
     content.mods = content.mods || []
     content.vmOptions = content.vmOptions || []
     content.mcOptions = content.mcOptions || []
+    if (!content.minecraft) content.minecraft = { name: 'custom' }
     return content
 }
 
 export default {
     namespaced: true,
     state() {
-        return singleSelect.state()
+        return {
+            all: [],
+            selected: '',
+        }
     },
     getters: {
-        ...singleSelect.getters,
+        selected: state => state[state.selected],
+        allStates: state => state.all.map(mName => state[mName]),
+        getByKey: state => id => state[id],
+        selectedKey: state => state.selected,
+        allKeys: state => state.all,
         errors(states, getters) {
             if (getters.selectedKey !== '') {
                 const get = getters[`${getters.selectedKey}/errors`]
@@ -33,27 +39,45 @@ export default {
         },
     },
     mutations: {
-        ...singleSelect.mutations,
+        unselect(state) {
+            state.selected = ''
+        },
+        select(state, moduleID) {
+            const idx = state.all.indexOf(moduleID);
+            if (idx !== -1) state.selected = moduleID;
+        },
+        add(state, payload) {
+            state.all.push(payload.id)
+        },
+        remove(state, id) {
+            if (state.all.indexOf(id) !== -1) {
+                if (state.selected === id) {
+                    state.selected = state.all[0]
+                }
+                state.all = state.all.filter(v => v !== id)
+            }
+        },
     },
     actions: {
-        load(context, payload) {
-            return context.dispatch('readFolder', { path: 'profiles' }, { root: true })
-                .then(files =>
-                    Promise.all(files.map(file => context.dispatch('readFile', {
-                        path: `profiles/${file}/${PROFILE_NAME}`,
-                        fallback: {},
-                        encoding: 'json',
-                    }, { root: true })
-                        .then(regulize)
-                        .then(profile => [file, profile]))))
-                .then((promises) => {
-                    for (const [id, profile] of promises) {
-                        const model = profile.type === 'modpack' ? modelModpack : modelServer
-                        context.commit('add', { id, module: mixin(model, profile) })
-                    }
-                })
-                .then(() => context.dispatch('readFile', { path: 'profiles.json', fallback: {}, encoding: 'json' }, { root: true })
-                    .then(json => context.commit('select', json.selected)))
+        loadProfile(context, id) {
+            return context.dispatch('read', {
+                path: `profiles/${id}/${PROFILE_NAME}`,
+                fallback: {},
+                encoding: 'json',
+            }, { root: true })
+                .then(regulize)
+                .then(profile => context.commit('add', { id, moduleData: profile }))
+        },
+        load({ dispatch, commit }, payload) {
+            return dispatch('readFolder', { path: 'profiles' }, { root: true })
+                .then(files => Promise.all(files.map(id => dispatch('loadProfile', id))))
+                .then(() => dispatch('read', { path: 'profiles.json', fallback: {}, encoding: 'json' }, { root: true }))
+                .then(json => commit('select', json.selected))
+        },
+        async saveProfile(context, { id }) {
+            const profileJson = `profiles/${id}/profile.json`
+            const data = await context.dispatch(`${id}/serialize`)
+            return context.dispatch('write', { path: profileJson, data }, { root: true })
         },
         save(context, payload) {
             const mutation = payload.mutation
@@ -61,37 +85,33 @@ export default {
             const path = mutation.split('/')
             if (path.length === 2) {
                 const [, action] = path
-                if (action === 'add') {
-                    const targetPath = `profiles/${object.id}/${PROFILE_NAME}`
-                    context.dispatch('writeFile', { path: targetPath, data: object.module.state }, { root: true })
-                } else if (action === 'select') {
-                    context.dispatch('writeFile', {
-                        path: PROFILES_NAEM, data: { selected: context.state._selected },
+                if (action === 'select') {
+                    return context.dispatch('write', {
+                        path: PROFILES_NAEM, data: { selected: context.state.selected },
                     }, { root: true })
                 }
-            } else {
-                const [, profileId, action] = path
-                const targetPath = `profiles/${profileId}/${PROFILE_NAME}`
-                context.dispatch(`${profileId}/save`)
-                    .then(data => context.dispatch('writeFile', { path: targetPath, data }, { root: true }))
+                return Promise.resolve();
+            } else if (path.length === 3) {
+                context.dispatch('saveProfile', { id: path[1] })
+            } else if (path.length === 4) {
+                const target = path[2]
+                return context.dispatch('saveProfile', { id: path[1] })
+                    .then(() => context.dispatch(`${path[1]}/${target}/save`, { id: path[1] }))
             }
+            return context.dispatch('saveProfile', { id: path[1] })
         },
         create(context, {
             type,
             option,
         }) {
             const id = uuid()
-            console.log(`create ${id}: ${type} with`)
-            if (type === 'server') {
-                context.commit('add', { id, module: mixin(modelServer, option) })
-            } else if (type === 'modpack') {
-                context.commit('add', { id, module: mixin(modelModpack, option) })
-            }
-            return id;
+            option.java = option.java || context.rootGetters['settings/defaultJava']
+            context.commit('add', { id, moduleData: option })
+            return context.dispatch('saveProfile', { id })
         },
         delete(context, payload) {
             context.commit('remove', payload)
-            return context.dispatch('deleteFolder', { path: `profiles/${payload}` }, { root: true })
+            return context.dispatch('delete', { path: `profiles/${payload}` }, { root: true })
         },
         select(context, profileId) {
             if (context.getters.selectedKey !== profileId) context.commit('select', profileId)

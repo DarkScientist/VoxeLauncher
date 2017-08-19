@@ -1,3 +1,4 @@
+import { ModContainer } from 'ts-minecraft'
 import repository from './models/repository'
 
 const state = () => {
@@ -5,15 +6,29 @@ const state = () => {
     s.root = 'mods'
     return s;
 }
-const getters = repository.getters;
+const getters = {
+    ...repository.getters,
+    modmap(states, gets) {
+        const values = gets.values;
+        const map = {
+            forge: {},
+            liteloader: {},
+        }
+        for (const container of values) {
+            map[container.meta.type][container.meta.id] = container.meta
+        }
+        return map
+    },
+    forgeMods: (states, gets) => gets.modmap.forge,
+    liteMods: (states, gets) => gets.modmap.liteloader,
+};
 const mutations = repository.mutations;
-const actions = Object.assign({
-    save(context, payload) {
+const actions = {
+    ...repository.actions,
+    meta(context, { name, data }) {
+        return ModContainer.parseForge(data).catch(e => ModContainer.parseLiteLoader(data))
     },
-    load() {
-
-    },
-}, repository.actions)
+}
 
 export default {
     namespaced: true,

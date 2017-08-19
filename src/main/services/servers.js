@@ -6,7 +6,8 @@ const fs = require('fs')
 export default {
     actions: {
         ping({ host, port }) {
-            return ServerInfo.fetchServerStatusFrame({ host, port })
+            // TODO multi-protocol trial 
+            return ServerInfo.fetchServerStatusFrame({ host, port }, { protocol: 335 })
         },
         fetchServerIcon(serverInfo) {
 

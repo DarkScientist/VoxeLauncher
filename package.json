@@ -19,8 +19,7 @@
         "pack:main": "cross-env NODE_ENV=production webpack --progress --colors --config .electron-vue/webpack.main.config.js",
         "pack:renderer": "cross-env NODE_ENV=production webpack --progress --colors --config .electron-vue/webpack.renderer.config.js",
         "test": "npm run unit",
-        "unit": "karma start test/unit/karma.conf.js",
-        "postinstall": "cd static && cd semantic && node ../../node_modules/gulp/bin/gulp.js build"
+        "unit": "karma start test/unit/karma.conf.js"
     },
     "dependencies": {
         "semantic-ui": "^2.2.10",
@@ -31,6 +30,7 @@
         "vuex": "^2.3.1"
     },
     "devDependencies": {
+        "adm-zip": "^0.4.7",
         "babel-core": "^6.22.1",
         "babel-eslint": "^7.2.3",
         "babel-loader": "^7.0.0",
@@ -76,9 +76,8 @@
         "karma-sourcemap-loader": "^0.3.7",
         "karma-spec-reporter": "^0.0.31",
         "karma-webpack": "^2.0.1",
-        "locales": "0.0.2",
-        "mkdirp": "^0.5.1",
         "mocha": "^3.0.2",
+        "monaco-editor": "^0.9.0",
         "multispinner": "^0.2.1",
         "muse-ui": "^2.1.0",
         "style-loader": "^0.18.1",
@@ -86,7 +85,7 @@
         "stylus-loader": "^3.0.1",
         "three": "^0.86.0",
         "three-orbit-controls": "^82.1.0",
-        "ts-minecraft": "^0.6.0-beta",
+        "ts-minecraft": "^0.9.3-beta",
         "url-loader": "^0.5.7",
         "vue-html-loader": "^1.2.2",
         "vue-loader": "^12.2.1",
@@ -97,5 +96,6 @@
         "webpack-dev-server": "^2.3.0",
         "webpack-hot-middleware": "^2.18.0",
         "webpack-merge": "^4.1.0"
-    }
+    },
+    "false": {}
 }

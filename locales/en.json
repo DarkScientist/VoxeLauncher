@@ -1,32 +1,174 @@
 {
     "hello": "Hello world",
-    "offline.name": "Offline",
-    "offline.account": "Username",
-    "offline.password": "No Password",
-    "mojang.name": "Mojang",
-    "mojang.account": "Email Adress",
-    "mojang.password": "Password",
+    "edit": "Edit",
+    "no": "No",
+    "save": "Save",
+    "name": "Name",
+    "create": "Create",
+    "author": "Author",
+    "description": "Description",
+    "help": "Help",
+    "home": "Home",
     "login": "Login",
-    "signup.description": "New to us?",
-    "signup": "Sign Up",
-    "modpack": "Modpack",
-    "server": "Server",
     "summery": "Summery",
-    "mods": "Mods",
-    "resourcepacks": "Resource Packs",
+    "add": "Add",
+    "remove": "Remove",
+    "!delete": "Delete",
+    "mod": {
+        "name": "Mod | Mods",
+        "hint": "Drop mod's .jar/.litemod here to import.",
+        "import": "Import Mod",
+        "export": "Export Mod"
+    },
+    "market": "Market",
+    "resourcepack": {
+        "name": "Resource Pack | Resource Packs",
+        "available": "Avaliable",
+        "selected": "Selected",
+        "hint": "Drop Resource Pack's folder/zip here to import.",
+        "import": "Import Resource Pack",
+        "export": "Export Resource Pack"
+    },
+    "map": {
+        "name": "Map | Maps",
+        "hint": "Drop map's folder/zip here to import map.",
+        "import": "Import Map",
+        "export": "Export Map"
+    },
     "settings": "Settings",
-    "versions": "Versions",
     "launch": "Launch",
-    "version.status": "Status",
-    "version.date": "Updated Date",
-    "version": "Version",
-    "version.releaseDate": "Release Date",
-    "profile.add.server": "Add Server",
-    "profile.add.modpack": "Add Modpack",
-    "profile.delete.server": "Delete the server",
-    "profile.delete.modpack": "Delete the modpack",
-    "profile.delete.server.description": "This will delete all the local data about this server. Are you sure to do this?",
-    "profile.delete.modpack.description": "This will delete all the data about this modpack. Are you sure to do this?",
-    "profile.delete.yes": "Delete",
-    "profile.delete.no": "No"
+    "version": {
+        "name": "Version | Versions",
+        "prepare": "Preparing Files",
+        "status": "Status",
+        "date": "Updated Date",
+        "releaseDate": "Release Date",
+        "unknown": "Unknown Version",
+        "download": "Download this version",
+        "downloading": "Downloading...",
+        "downloaded": "This version is in the disk"
+    },
+    "gametype": {
+        "survival": "Survival",
+        "creative": "Creative",
+        "adventure": "Adventure",
+        "spectator": "Spectator",
+        "non": "Non mode"
+    },
+    "difficulty": {
+        "peaseful": "Peaseful",
+        "easy": "Easy",
+        "normal": "Normal",
+        "hard": "Hard",
+        "non": "Unknown difficulty"
+    },
+    "signup": {
+        "description": "New to us?",
+        "name": "Sign Up"
+    },
+    "user": {
+        "signup": "Singup",
+        "profile": "Profile",
+        "logout": "Logout"
+    },
+    "offline": {
+        "name": "Offline",
+        "account": "Username",
+        "password": "No Password"
+    },
+    "mojang": {
+        "name": "Mojang",
+        "account": "Email Adress",
+        "password": "Password"
+    },
+    "modpack": {
+        "add": "Add Modpack",
+        "name": "Modpack | Modpacks",
+        "edit": "Edit Modpack Info",
+        "delete": {
+            "name": "Delete the modpack",
+            "description": "This will delete all the data about this modpack. Are you sure to do this?"
+        },
+        "create": "Create a New Modpack"
+    },
+    "delete": {
+        "yes": "Delete",
+        "no": "No"
+    },
+    "server": {
+        "add": "Add Server",
+        "name": "Server | Servers",
+        "create": "Create A New Server",
+        "players": "Players",
+        "pings": "Pings",
+        "host": "Host",
+        "port": "Port",
+        "edit": "Edit Server Info",
+        "motd": "Server MOTD",
+        "delete": {
+            "name": "Delete the server",
+            "description": "This will delete all the local data about this server. Are you sure to do this?"
+        },
+        "status": {
+            "nohost": "Cannot find host!",
+            "timeout": "Connect server timeout!"
+        }
+    },
+    "errors.empty": "No error yet",
+    "renderClouds": {
+        "name": "Clouds",
+        "true": "Fancy",
+        "false": "Off",
+        "fast": "Fast"
+    },
+    "particles": {
+        "name": "Particle",
+        "0": "Maximum",
+        "1": "Decreased",
+        "2": "Minimum"
+    },
+    "ao": {
+        "name": "Smooth Lighting",
+        "0": "Off",
+        "1": "Minimum",
+        "2": "Maximum"
+    },
+    "mipmapLevels": {
+        "name": "Mipmap",
+        "0": "0",
+        "1": "1",
+        "2": "2",
+        "3": "3",
+        "4": "4"
+    },
+    "entityShadows": {
+        "name": "Entity Shadows",
+        "true": "Enabled",
+        "false": "Disabled"
+    },
+    "fancyGraphics": {
+        "name": "Graphic",
+        "true": "Fancy",
+        "false": "Fast"
+    },
+    "enableVsync": {
+        "name": "Vsync",
+        "true": "Enabled",
+        "false": "Disabled"
+    },
+    "fboEnable": {
+        "name": "Use FBO",
+        "true": "Enabled",
+        "false": "Disabled"
+    },
+    "useVbo": {
+        "name": "Use VBO",
+        "true": "Enabled",
+        "false": "Disabled"
+    },
+    "anaglyph3d": {
+        "name": "3D Effect",
+        "true": "Enabled",
+        "false": "Disabled"
+    }
 }

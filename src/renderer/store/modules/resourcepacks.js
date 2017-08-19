@@ -1,3 +1,4 @@
+import { ResourcePack } from 'ts-minecraft'
 import repository from './models/repository'
 
 const state = () => {
@@ -5,15 +6,22 @@ const state = () => {
     s.root = 'resourcepacks'
     return s;
 }
-const getters = repository.getters;
+const getters = {
+    ...repository.getters,
+    namemap(states, gets) {
+        const map = {}
+        for (const pack of gets.values) {
+            map[pack.name] = pack.meta
+        }
+    },
+};
 const mutations = repository.mutations;
-const actions = Object.assign({
-    save(context, payload) {
+const actions = {
+    ...repository.actions,
+    meta(context, { name, data }) {
+        return ResourcePack.readFromBuffer(name, data, true)
     },
-    load() { 
-
-    },
-}, repository.actions)
+}
 
 export default {
     namespaced: true,

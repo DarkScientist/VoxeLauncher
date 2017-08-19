@@ -1,5 +1,6 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
+import { ipcRenderer } from 'electron'
 
 import plugins from './plugins'
 import modules from './modules'
@@ -15,16 +16,21 @@ for (const key in modules) {
     }
 }
 
-const store = new Vuex.Store({
-    modules,
-    getters,
-    actions,
-    strict: process.env.NODE_ENV !== 'production',
-    plugins,
-});
+export const init = (root) => {
+    const store = new Vuex.Store({
+        state: { root, dragover: false },
+        mutations: {
+            dragover(states, value) {
+                states.dragover = value
+            },
+        },
+        modules,
+        getters,
+        actions: actions(root),
+        strict: process.env.NODE_ENV !== 'production',
+        plugins,
+    });
 
-export const init = () => {
-    console.log('start loading modules')
     const keys = Object.keys(modules)
     const promises = []
     for (const key of keys) {
@@ -46,7 +52,6 @@ export const init = () => {
     }
     return Promise.all(promises).then(() => {
         console.log('done for all promise!')
-        console.log(store)
         return store
     }, (err) => {
         console.log('Done with Error')

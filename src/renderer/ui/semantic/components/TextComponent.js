@@ -20,25 +20,45 @@ export default {
     render(createElement) {
         const arr = []
         if (!this.source) return createElement('div')
-        if (typeof this.source === 'string') return createElement('p', this.source)
-        if (this.source.iterator) {
-            for (const component of this.source.iterator) {
-                const style = {}
-                if (component.style.bold) style['font-weight'] = 'bold';
-                if (component.style.underlined) style['text-decoration'] = 'underline';
-                if (component.style.italic) style['font-style'] = 'italic';
-                if (component.style.strikethrough) style['text-decoration'] = 'line-through';
-                if (component.style.color) {
-                    const code = colorCode[component.style.color.colorIndex];
-                    const r = (code >> 16) / 255.0 // eslint-disable-line no-bitwise
-                    const g = ((code >> 8) & 255) / 255.0 // eslint-disable-line no-bitwise
-                    const b = (code & 255) / 255.0 // eslint-disable-line no-bitwise
-                    style.color = `(${r}, ${g}, ${b})`
+        let iterator
+        if (typeof this.source === 'string') {
+            iterator = [TextComponent.fromFormattedString(this.source)]
+        } else {
+            iterator = this.source.iterator;
+        }
+        if (iterator) {
+            for (const component of iterator) {
+                const attrs = {}
+                if (this.styled === 'true') {
+                    let style = ''
+                    if (component.style.bold) style += 'font-weight:bold;';
+                    if (component.style.underlined) style += 'text-decoration:underline;';
+                    if (component.style.italic) style += 'font-style:italic;';
+                    if (component.style.strikethrough) style += 'text-decoration:line-through;';
+                    if (component.style.color) {
+                        const code = colorCode[component.style.color.colorIndex];
+                        const r = (code >> 16) // eslint-disable-line no-bitwise
+                        const g = ((code >> 8) & 255) // eslint-disable-line no-bitwise
+                        const b = (code & 255)// eslint-disable-line no-bitwise
+                        style += `color: rgb(${r}, ${g}, ${b});`
+                    }
+                    attrs.style = style;
                 }
-                arr.push(createElement('p', { style }, [component.unformatted]))
+                let text = component.unformatted;
+                if (this.localized === 'true' && this.$te(component.unformatted)) {
+                    text = this.$t(component.unformatted, this.args);
+                }
+                arr.push(createElement('p', {
+                    attrs,
+                }, [text]))
             }
         }
         return createElement('p', {}, arr)
     },
-    props: { source: TextComponent },
+    props: {
+        source: TextComponent,
+        localized: String,
+        args: { type: Object, default: () => { Object.create(null) } },
+        styled: { type: String, default: 'true' },
+    },
 }
