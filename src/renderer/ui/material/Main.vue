@@ -8,24 +8,11 @@
             <mu-float-button icon="add" class="demo-float-button"/>
         </div>
         <mu-drawer :open="openNav" :docked="docked" :overlay="docked" class="app-drawer" :zDepth="1">
-            <mu-appbar :zDepth="0" title="ILauncher">
-                
-            </mu-appbar>
+            <mu-appbar :zDepth="0" title="ILauncher"></mu-appbar>
         </mu-drawer>
-        <create v-if="inPage.createPackage">
+        <create v-if="inPage.createPackage" @closeTab="closeAllPage">
         </create>
-        <div id="floatButton" v-if="showFloatButton">
-            <transition name="fade">
-                <div class="childFlatButtonGroup" :class="{'hidden': !activeFloat}">
-                
-                    <mu-float-button @click="toggleCreatePage" ref="createPackageButton" class="childFlatButton" icon="create_new_folder" mini />
-                    <mu-float-button class="childFlatButton" icon="explore" mini />
-                </div> 
-            </transition>                           
-            <transition name="routeIcon">   
-                <mu-float-button class="actionButton" @click="toggleButton" icon="add" :class="{'active': activeFloat}"/>
-            </transition>   
-        </div>
+        <floatButton @changePage="changePage"> </floatButton>
         <Login v-if="needLogin"></Login>
     </div>
 </template>
@@ -40,6 +27,7 @@ Vue.use(MuseUI);
 require("muse-ui/dist/muse-ui.css")
 require("muse-ui/dist/muse-ui.js")
 import Login from './components/Login'
+import floatButton from './components/Utils/FloatButton'
 import Create from './components/Create'
 import { mapMutations, mapState, mapActions, mapGetters } from 'vuex'
 
@@ -51,7 +39,6 @@ export default {
             docked: true,
             needLogin: false,
             showFloatButton: true,
-            activeFloat: false,
             inPage: {
                 createPackage: false
             }
@@ -90,12 +77,9 @@ export default {
         toggleNav() {
             this.openNav = !this.openNav;
         },
-        toggleButton() {
-            this.activeFloat = !this.activeFloat;
-        },
-        toggleCreatePage() {
+        changePage(id) {
             this.closeAllPage()
-            this.inPage.createPackage = true;
+            this.inPage[id] = true;
         },
         closeAllPage() {
             for (const item of Object.keys(this.inPage)) {
@@ -104,7 +88,7 @@ export default {
             this.openNav = false;
         }
     },
-    components: { Login, Create }
+    components: { Login, Create, floatButton }
 }
 </script>
 
@@ -130,50 +114,6 @@ export default {
     .Appbar.nav-hide {
         left: 0;
     }
-
-    #floatButton {
-        position: fixed;
-        bottom: 18px;
-        right: 32px;
-        text-align: right;
-        z-index: 3;
-    }
-
-    .childFlatButtonGroup button:nth-child(1) {
-        position: fixed;
-        right: 40px;
-        bottom: 100px;
-        z-index: 2;
-    }
-    .childFlatButtonGroup button:nth-child(2) {
-        position: fixed;
-        right: 40px;
-        bottom: 160px;
-        z-index: 1;
-    }
-    .childFlatButtonGroup.hidden button {
-        z-index: 1;
-        right: 40px;
-        bottom: 30px;
-    }
-
-    .actionButton {
-        -webkit-transition: all .3s;
-        transition: all .3s;
-        z-index: 2;
-    }
-
-    .fade-enter-active, .fade-leave-active {
-        transition: bottom .5s
-    }
-    .fade-enter, .fade-leave-to {
-        opacity: 0
-    }
-    .active {
-        transition: all .3s;
-        transform: rotate(-45deg);
-        background-color: red;
-    }
 </style>
 
 <style>
@@ -189,8 +129,4 @@ export default {
         right: 40px;
         bottom: 32px;
     }
-</style>
-
-<style lang="stylus">
-    @import '../../assets/main'
 </style>

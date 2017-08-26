@@ -3,13 +3,13 @@
     <!-- <component v-bind:is="theme"> -->
     <!-- </component> -->
     <!-- <material></material> -->
-    <semantic></semantic>
+    <material></material>
   </div>
 </template>
 
 <script>
 
-import SemanticUi from './ui/semantic/Main'
+// import SemanticUi from './ui/semantic/Main'
 import MaterialUi from './ui/material/Main'
 
 import { mapState } from 'vuex'
@@ -42,7 +42,7 @@ export default {
     },
   },
   components: {
-    semantic: SemanticUi,
+    // semantic: SemanticUi,
     material: MaterialUi,
   }
 }
