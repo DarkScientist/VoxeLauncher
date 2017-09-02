@@ -2,8 +2,8 @@
     <div id="floatButton">
             <transition name="fade">
                 <div class="childFlatButtonGroup" :class="{'hidden': !activeFloat}">
-                    <mu-float-button @click="toggleCreatePage" ref="createPackageButton" class="childFlatButton" icon="create_new_folder" mini />
-                    <mu-float-button class="childFlatButton" icon="explore" mini />
+                    <mu-float-button @click="togglePage('createPackage')" ref="createPackageButton" class="childFlatButton" icon="create_new_folder" mini />
+                    <mu-float-button @click="togglePage('createServer')" class="childFlatButton" icon="explore" mini />
                 </div> 
             </transition>                           
             <transition name="routeIcon">   
@@ -20,8 +20,8 @@
             }
         },
         methods: {
-            toggleCreatePage() {
-                this.$emit("changePage", "createPackage")
+            togglePage(page) {
+                this.$emit("changePage", page)
             },
             toggleButton() {
                 this.activeFloat = !this.activeFloat;

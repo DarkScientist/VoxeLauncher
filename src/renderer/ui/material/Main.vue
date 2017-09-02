@@ -2,7 +2,7 @@
     <div id="main">
         <mu-appbar title="Main" :zDepth="0" class="Appbar moveAble" :class="{'nav-hide': !openNav}">
             <mu-icon-button v-if="atMain" @click="toggleNav" class="notMoveAble" icon="menu" slot="left" />
-            <mu-icon-button class="notMoveAble" icon="clear" slot="right" />
+            <mu-icon-button class="notMoveAble" icon="clear" slot="right" @click="exitApp" />
         </mu-appbar>
         <div>
             <mu-float-button icon="add" class="demo-float-button"/>
@@ -10,8 +10,8 @@
         <mu-drawer :open="openNav" :docked="docked" :overlay="docked" class="app-drawer" :zDepth="1">
             <mu-appbar :zDepth="0" title="ILauncher"></mu-appbar>
         </mu-drawer>
-        <create v-if="inPage.createPackage" @closeTab="closeAllPage">
-        </create>
+        <create v-if="inPage.createPackage" @closeTab="closeAllPage" />
+        <joinServer v-if="inPage.createServer" @closeTab="closeAllPage" />
         <floatButton @changePage="changePage"> </floatButton>
         <Login v-if="needLogin"></Login>
     </div>
@@ -29,6 +29,7 @@ require("muse-ui/dist/muse-ui.js")
 import Login from './components/Login'
 import floatButton from './components/Utils/FloatButton'
 import Create from './components/Create'
+import JoinServer from './components/JoinServer'
 import { mapMutations, mapState, mapActions, mapGetters } from 'vuex'
 
 export default {
@@ -40,7 +41,8 @@ export default {
             needLogin: false,
             showFloatButton: true,
             inPage: {
-                createPackage: false
+                createPackage: false,
+                createServer: false,
             }
         }
     },
@@ -86,9 +88,12 @@ export default {
                 this.inPage[item] = false;
             }
             this.openNav = false;
+        },
+        exitApp() {
+            require('electron').ipcRenderer.sendSync('exit')
         }
     },
-    components: { Login, Create, floatButton }
+    components: { Login, Create, JoinServer, floatButton }
 }
 </script>
 

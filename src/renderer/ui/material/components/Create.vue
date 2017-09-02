@@ -80,6 +80,11 @@
             ...mapGetters('auth', ['username'])
         },
         methods: {
+            ...mapActions('profiles', {
+                createProfile: 'createAndSelect',
+                selectProfile: 'select',
+                deleteProfile: 'delete',
+            }),
             handleNext() {
                 if (this.activeStep === 0) {
                     if (this.version === "") {
@@ -108,6 +113,19 @@
                     this.activeStep++
                 } else {
                     // Finish The package
+                    this.createProfile({
+                        type: 'modpack',
+                        option: {
+                            name: this.name,
+                            author: this.author,
+                            version: this.packageverison,
+                            minecraft: {
+                                name: "custom",
+                                version: this.version,
+                            }
+                        }
+                    })
+                    this.$emit("closeTab")
                 }
             },
             handlePrev() {
@@ -126,7 +144,7 @@
     }    
 </script>
 
-<style scoped>
+<style>
     .section {
         background-color: #37474f;
         min-height: 48px;

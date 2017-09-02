@@ -1,6 +1,6 @@
 <template>
     <div>
-        <mu-select-field :maxHeight="300" label="选择你喜欢的游戏" v-bind:value="selectVersion" v-on:change="update($event)" :errorText="errorText">
+        <mu-select-field :maxHeight="300" label="选择你喜欢的游戏" v-bind:value="selectVersion" v-on:change="update($event)" :errorText="error">
             <mu-menu-item v-for="{id}, index in metas" :key="id" :value="id" :title="id"/>
         </mu-select-field>
     </div>
@@ -11,6 +11,7 @@ import { mapGetters, mapActions, mapState } from 'vuex'
 export default {
     // props: ["error", "selectVersion"],
     props: {
+        error: "",
         selectVersion: String
     },
     data() {
