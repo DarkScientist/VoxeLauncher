@@ -4,9 +4,6 @@
             <mu-icon-button v-if="atMain" @click="toggleNav" class="notMoveAble" icon="menu" slot="left" />
             <mu-icon-button class="notMoveAble" icon="clear" slot="right" @click="exitApp" />
         </mu-appbar>
-        <div>
-            <mu-float-button icon="add" class="demo-float-button"/>
-        </div>
         <mu-drawer :open="openNav" :docked="docked" :overlay="docked" class="app-drawer" :zDepth="1">
             <mu-appbar :zDepth="0" title="ILauncher"></mu-appbar>
         </mu-drawer>
@@ -14,6 +11,9 @@
         <joinServer v-if="inPage.createServer" @closeTab="closeAllPage" />
         <floatButton @changePage="changePage"> </floatButton>
         <Login v-if="needLogin"></Login>
+        <div class="view-content" :class="{'content-nav': openNav}">
+            <serverCard />
+        </div>
     </div>
 </template>
 
@@ -30,6 +30,7 @@ import Login from './components/Login'
 import floatButton from './components/Utils/FloatButton'
 import Create from './components/Create'
 import JoinServer from './components/JoinServer'
+import ServerCard from './components/Card/ServerCard'
 import { mapMutations, mapState, mapActions, mapGetters } from 'vuex'
 
 export default {
@@ -93,7 +94,7 @@ export default {
             require('electron').ipcRenderer.sendSync('exit')
         }
     },
-    components: { Login, Create, JoinServer, floatButton }
+    components: { Login, Create, JoinServer, floatButton, ServerCard }
 }
 </script>
 
@@ -118,6 +119,15 @@ export default {
 
     .Appbar.nav-hide {
         left: 0;
+    }
+
+    .view-content {
+        padding-top: 72px;
+        padding-left: 32px;
+        padding-right: 32px;
+    }
+    .content-nav {
+        padding-left: 288px;
     }
 </style>
 

@@ -2,8 +2,8 @@
   <div id="app" @drop="ondrop">
     <!-- <component v-bind:is="theme"> -->
     <!-- </component> -->
-    <!-- <material></material> -->
-    <semantic></semantic>
+    <material></material>
+    <!-- <semantic></semantic> -->
   </div>
 </template>
 
