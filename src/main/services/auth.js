@@ -3,9 +3,7 @@ import {
 } from 'uuid'
 
 const fs = require('fs')
-const {
-    AuthService,
-} = require('ts-minecraft')
+const { AuthService } = require('ts-minecraft')
 
 const registered = new Map()
 export default {
@@ -14,11 +12,7 @@ export default {
             account,
             clientToken,
         }) => AuthService.offlineAuth(account));
-        registered.set('mojang', ({
-            account,
-            password,
-            clientToken,
-        }) => AuthService.yggdrasilAuth({
+        registered.set('mojang', ({ account, password, clientToken }) => AuthService.yggdrasilAuth({
             username: account,
             password,
             clientToken: clientToken || v4(),
@@ -27,12 +21,9 @@ export default {
 
     proxy: {
         register(id, func) {
-            if (registered.has(id)) {
-                throw new Error(`duplicated id: ${id}`)
-            }
+            if (registered.has(id)) throw new Error(`duplicated id: ${id}`)
             registered.set(id, func)
         },
-
     },
 
     actions: {
@@ -45,6 +36,7 @@ export default {
                 }
             });
         },
+
         modes() {
             return Array.from(registered.keys())
         },

@@ -5,16 +5,29 @@
 
 <script>
 
-import THREEx from 'static/threex.minecraft'
-var THREE = require('three')
+import Model from './threex.minecraft'
+let THREE = require('three')
 const OrbitControls = require('three-orbit-controls')(THREE)
 export default {
-    props: ['width', 'height'],
+    props: ['width', 'height', 'skin', 'cape'],
+    watch: {
+        skin(nskin) {
+            if (!nskin) {
+                this.$setSkin(undefined)
+                return;
+            }
+            let slim = nskin.metadata ? nskin.metadata.model === 'slim' : false
+            if (nskin.data) {
+                this.$setSkin('data:image/png;base64, ' + nskin.data, slim)
+            }
+        }
+    },
     mounted(e) {
+
         console.log("===========START===========")
 
-        var canvas = this.$el;
-        var gl = canvas.getContext("webgl");
+        let canvas = this.$el;
+        let gl = canvas.getContext("webgl");
 
         console.log(gl.getParameter(gl.RENDERER));
         console.log(gl.getParameter(gl.VENDOR));
@@ -22,11 +35,11 @@ export default {
         console.log(getUnmaskedInfo(gl).renderer);
 
         function getUnmaskedInfo(gl) {
-            var unMaskedInfo = {
+            let unMaskedInfo = {
                 renderer: '',
                 vendor: ''
             };
-            var dbgRenderInfo = gl.getExtension("WEBGL_debug_renderer_info");
+            let dbgRenderInfo = gl.getExtension("WEBGL_debug_renderer_info");
             if (dbgRenderInfo != null) {
                 unMaskedInfo.renderer = gl.getParameter(dbgRenderInfo.UNMASKED_RENDERER_WEBGL);
                 unMaskedInfo.vendor = gl.getParameter(dbgRenderInfo.UNMASKED_VENDOR_WEBGL);
@@ -34,26 +47,24 @@ export default {
             return unMaskedInfo;
         }
         console.log("===========END===========")
-        var renderer = new THREE.WebGLRenderer({ canvas: this.$el, antialias: true, alpha: true });
-        // renderer.setClearColor('#FFF', 0)
-        // gl.clear(gl.COLOR_BUFFER_BIT);
-        var onRenderFcts = [];
-        var scene = new THREE.Scene();
-        var camera = new THREE.PerspectiveCamera(45, this.width / this.height, 0.5, 5);
+        let renderer = new THREE.WebGLRenderer({ canvas: this.$el, antialias: true, alpha: true });
+        let scene = new THREE.Scene();
+        let camera = new THREE.PerspectiveCamera(45, this.width / this.height, 0.5, 5);
         camera.position.z = 3;
-        //////////////////////////////////////////////////////////////////////////////////
-        //		load Character							//
-        //////////////////////////////////////////////////////////////////////////////////
 
-        var character = new THREEx.MinecraftChar()
+        let character = new Model()
         character.root.translateY(-0.5)
+        this.$setSkin = (skin, slim) => {
+            character.updateSkin(skin, slim);
+        }
+        this.$setCape = (cape) => {
+            character.updateCape(cape);
+        }
         scene.add(character.root)
-        let vec = character.root.position
+        if (this.skin) 
+            this.$setSkin('data:image/png;base64, ' + this.skin.data, this.skin.slim)
         camera.lookAt(new THREE.Vector3(0, 0, 0))
 
-        //////////////////////////////////////////////////////////////////////////////////
-        //		controls							//
-        //////////////////////////////////////////////////////////////////////////////////
 
         let controls = new OrbitControls(camera, this.$el)
         controls.target = new THREE.Vector3(0, 0, 0)
@@ -64,17 +75,10 @@ export default {
         controls.autoRotate = true
         controls.autoRotateSpeed = 4
 
-        //////////////////////////////////////////////////////////////////////////////////
-        //		loop runner							//
-        //////////////////////////////////////////////////////////////////////////////////
-
         requestAnimationFrame(function animate(nowMsec) {
-            // keep looping
             requestAnimationFrame(animate);
-            // measure time
             controls.update()
             renderer.render(scene, camera);
-            // character.root.rotation.y += 0.01;
         })
     }
 }

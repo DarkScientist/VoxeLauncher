@@ -38,15 +38,15 @@
                     {{username}}
                     <i class="dropdown icon"></i>
                     <div class="menu">
-                        <div class="item">
+                        <div class="item" @click="showModal('profile')">
                             <i class="id card outline icon"></i> {{$t('user.profile')}}
                         </div>
-                        <div class="item">
+                        <div class="item" @click="showModal('login')">
                             <i class="sign out icon"></i> {{$t('user.logout')}}
                         </div>
                     </div>
                 </h5>
-                <skin-view width="210" height="400"></skin-view>
+                <skin-view width="210" height="400" :skin="skin"></skin-view>
             </div>
             <div class="twelve wide column">
                 <card-view ref='view' v-if="!isSelecting" @select="selectProfile" @delete="showModal('delete', { type: $event.source.type, id: $event.id })"></card-view>
@@ -85,8 +85,25 @@
                             {{$t('errors.empty')}}
                         </div>
                     </div>
-                    <div class="ui button">
-                        <i class="tasks icon"></i> {{tasks.length}}
+                    <div id="taskPopup" class="ui button">
+                        <i class="tasks icon"></i> {{tasksCount}}
+                    </div>
+                    <div class="ui flowing popup top left transition hidden">
+                        <div v-if="tasksCount != 0" class="ui middle aligned divided list" style="max-height:300px; min-width:300px; overflow:hidden">
+                            <div v-for="(moduleTask, index) in errors" :key='moduleTask' class="item">
+                                {{index}}
+                                <div class="ui middle aligned selection divided list">
+                                    <div v-for="task of moduleTask" :key="task" class="item">
+                                        <!-- {{task.name}} -->
+                                        <!-- {{task.progress}} -->
+                                        <!-- {{task.status}} -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div v-else>
+                            {{$t('errors.empty')}}
+                        </div>
                     </div>
                 </span>
                 <span v-if="!isSelecting">
@@ -97,6 +114,9 @@
                     <div class="ui icon right floated  inverted button non-moveable" @click="create('server')">
                         <i class="plus icon"></i>
                         {{$t('server.add')}}
+                    </div>
+                    <div class="ui icon right floated  inverted button non-moveable" @click="test">
+                        <i class="plus icon"></i>
                     </div>
                 </span>
                 <span v-else>
@@ -116,22 +136,20 @@
         <modpack-modal ref="modpackModal" :defaultAuthor="username" @accept="submitProfile($event, 'modpack')"></modpack-modal>
         <server-modal ref="serverModal" @accept="submitProfile($event, 'server')"></server-modal>
         <delete-modal ref="deleteModal" @accept="deleteProfile"></delete-modal>
+        <profile-modal ref="profileModal"></profile-modal>
     </div>
 </template>
 
 <script>
 import 'static/semantic/semantic.min.css'
 import 'static/semantic/semantic.min.js'
-
-// import imgURL from '../../assets/Background1.png'
 import modals from './components/modals'
 import ModpackView from './components/ModpackView'
 import ServerView from './components/ServerView'
 import CardView from './components/CardView'
-import SkinView from './components/SkinView'
+import SkinView from '../shared/SkinView'
 
-import { mapMutations, mapState, mapGetters } from 'vuex'
-import mapActions from '../../shared/mapAction'
+import { mapMutations, mapState, mapGetters, mapActions } from 'vuex'
 export default {
     components: {
         ModpackView, ServerView, CardView,
@@ -150,24 +168,18 @@ export default {
             'selectedProfile': 'selected',
             'selectedProfileID': 'selectedKey'
         }),
-        ...mapGetters(['errors', 'tasks', 'errorsCount']),
-        ...mapGetters('auth', ['username']),
+        ...mapGetters(['errors', 'tasks', 'errorsCount', 'tasksCount']),
+        ...mapGetters('auth', ['username', 'skin']),
         ...mapState('settings', ['autoDownload']),
         isSelecting() {
             return this.selectedProfile != undefined && this.selectedProfileID != null
         },
     },
     mounted(e) {
-        if (this.username === 'Steve') this.showLogin()
-        const self = this
+        if (this.username === '') this.showModal('login')
+        const self = this;
         $('#userDropdown').dropdown({
             on: 'hover',
-            action: function (text, value, element) {
-                if (element.lastChild.textContent === 'Profile') {
-
-                } else self.showModal('login')
-                return false
-            }
         })
         $('#warningPopup').popup({
             hoverable: true,
@@ -222,8 +234,13 @@ export default {
                 this.createProfile({ type, option: event })
             }
         },
+        test() {
+            this.$store.dispatch('query', { 'service': 'jre', action: 'ensureJre' })
+        },
         onlaunch() {
-            this.launch()
+            this.launch().catch(e => {
+                console.log(e);
+            })
         },
     },
 }
