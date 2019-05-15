@@ -13,14 +13,12 @@
 				<v-treeview hoverable transition v-model="tree" :open="opened" :items="all" activatable
 				  item-key="_internalId" open-on-click item-children="tasks" item-text="localText">
 					<template v-slot:append="{ item, open }">
-						<v-icon v-if="item.status !== 'running'" :color="item.status === 'successed'?'green':item.status === 'cancelled'?'white':'red'">
+						<v-icon style="padding-right: 5px;" v-if="item.status !== 'running'" :color="item.status === 'successed'?'green':item.status === 'cancelled'?'white':'red'">
 							{{item.status === 'successed' ? 'check' : item.status === 'cancelled' ? 'stop' :
 							'error_outline'}}
 						</v-icon>
-						<v-progress-linear v-if="item.status === 'running' && item.total !== -1" :height="10" :value="item.progress / item.total * 100"
-						  color="white"></v-progress-linear>
-						<v-progress-circular v-if="item.status === 'running' && item.total === -1" small :size="20"
-						  :width="3" indeterminate color="white" class="mb-0"></v-progress-circular>
+						<v-progress-circular style="padding-right: 5px;" v-if="item.status === 'running' && item.total === -1"
+						  small :size="20" :width="3" indeterminate color="white" class="mb-0"></v-progress-circular>
 					</template>
 
 					<template v-slot:label="{ item, open }">
@@ -28,6 +26,8 @@
 							{{item.localText}}
 							<span style="color: grey; font-size: 12px; font-style: italic; ">{{item.time}}</span>
 							<div style="color: grey; font-size: 12px; font-style: italic; ">{{item.message}}</div>
+							<v-progress-linear v-if="item.status === 'running' && item.total !== -1" :height="10" :value="item.progress / item.total * 100"
+							  color="white"></v-progress-linear>
 						</div>
 					</template>
 				</v-treeview>

@@ -154,8 +154,12 @@ const mod = {
                 },
             },
             mutations: {
+                /**
+                 * @param {import('./version').VersionModule.ForgeState} state
+                 * @param {import('ts-minecraft').ForgeWebPage} meta 
+                 */
                 update(state, meta) {
-                    const { mcversion, versions } = meta.mcversion;
+                    const { mcversion, versions } = meta;
                     if (!state.mcversions[mcversion]) state.mcversions[mcversion] = {};
                     const mcversionContainer = state.mcversions[mcversion];
                     mcversionContainer.timestamp = meta.timestamp;

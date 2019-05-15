@@ -67,6 +67,12 @@ const mod = {
             fitin(state.all[state.id].settings, settings);
         },
 
+        forge(state, { mods }) {
+            if (mods instanceof Array) {
+                state.all[state.id].forge.mods = mods;
+            }
+        },
+
         diagnose(state, { diagnosis, errors }) {
             const id = state.id;
             if (state.all[id].diagnosis === undefined) state.all[id].diagnosis = {};

@@ -4,6 +4,7 @@ import paths from 'path';
 import url from 'url';
 import { ResourcePack, Forge, LiteLoader } from 'ts-minecraft';
 import { net } from 'electron';
+import { parseEntries, open, bufferEntry } from 'yauzlw';
 import { requireString, requireObject } from '../helpers/utils';
 import base from './resource.base';
 import { ensureDir, ensureFile, copy } from '../helpers/fs-utils';
@@ -70,7 +71,7 @@ async function parseResource(filename, hash, ext, data, source) {
     Object.freeze(meta);
 
     return {
-        name: getRegularName(type, meta) || filename,
+        name: getRegularName(type, meta) || paths.basename(paths.basename(filename, '.zip'), '.jar'),
         hash,
         ext,
         metadata: meta,
@@ -80,6 +81,7 @@ async function parseResource(filename, hash, ext, data, source) {
     };
 }
 
+const cache = {};
 
 /**
  * @type {import('./resource').ResourceModule}
@@ -99,12 +101,12 @@ const mod = {
             const modsFiles = await fs.readdir(modsDir);
             const resourcePacksFiles = await fs.readdir(resourcepacksDir);
 
-
+            const touched = {};
             async function reimport(file) {
                 try {
                     const hash = await readHash(file);
                     const metaFile = context.rootGetters.path('resources', `${hash}.json`);
-
+                    touched[metaFile] = true;
                     const metadata = await context.dispatch('getPersistence', metaFile, { root: true });
                     if (!metadata) {
                         const ext = paths.extname(file);
@@ -129,6 +131,13 @@ const mod = {
             }
             const resources = (await Promise.all(modsFiles.map(file => context.rootGetters.path('mods', file)).concat(resourcePacksFiles.map(file => context.rootGetters.path('resourcepacks', file))).map(reimport)))
                 .filter(resource => resource !== undefined);
+
+            const metaFiles = await context.dispatch('readFolder', 'resources', { root: true });
+            for (const metaFile of metaFiles.map(f => context.rootGetters.path('resources', f))) {
+                if (!touched[metaFile]) {
+                    await fs.unlink(metaFile);
+                }
+            }
             if (resources.length > 0) {
                 context.commit('resources', resources);
             }
@@ -160,6 +169,30 @@ const mod = {
                 return Promise.all(all.map(r => context.dispatch('import', r)));
             }
             return Promise.reject(new Error('Require argument be an array!'));
+        },
+
+        async readForgeLogo(context, resourceId) {
+            requireString(resourceId);
+            if (typeof cache[resourceId] === 'string') return cache[resourceId];
+            const res = context.state.mods[resourceId];
+            if (res.type !== 'forge') {
+                throw new Error(`The resource should be forge but get ${res.type}`);
+            }
+            const meta = res.metadata[0];
+            if (!meta.logoFile) {
+                cache[resourceId] = '';
+                return '';
+            }
+            const zip = await open(res.path, { lazyEntries: true, autoClose: false });
+            const { [meta.logoFile]: logo } = await parseEntries(zip, [meta.logoFile]);
+            if (logo) {
+                const buffer = await bufferEntry(zip, logo);
+                const data = buffer.toString('base64');
+                cache[resourceId] = data;
+                return data;
+            }
+            cache[resourceId] = '';
+            return '';
         },
 
         async import(context, { path, metadata = {} }) {
@@ -234,8 +267,6 @@ const mod = {
 
             const resource = await parseResource(path, hash, ext, data, source);
 
-            console.log(`Import resource ${name}${ext}(${hash}) into ${resource.domain}`);
-
             let dataFile = paths.join(root, resource.domain, `${resource.name}${ext}`);
 
             if (existsSync(dataFile)) {
@@ -258,6 +289,7 @@ const mod = {
             // store metadata to disk
             await fs.writeFile(paths.join(root, 'resources', `${hash}.json`), JSON.stringify(resource, undefined, 4));
             importTaskContext.finish();
+            console.log(dataFile);
 
             context.commit('resource', resource);
 
