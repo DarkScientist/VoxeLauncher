@@ -1,9 +1,18 @@
 import { app, Menu, Tray, dialog, ipcMain, nativeImage } from 'electron';
 import i18n from './i18n';
 
+/**
+ * @type {Tray}
+ */
 let tray = null;
+
+app.on('before-quit', () => {
+    if (tray !== null) {
+        tray.destroy();
+    }
+});
 app.on('ready', () => {
-    const img = nativeImage.createFromPath('./static/favicon.png');
+    const img = nativeImage.createFromPath(`${__static}/favicon.png`);
     tray = new Tray(img);
     const template = [
         { type: 'normal', label: '' },
@@ -45,3 +54,7 @@ app.on('ready', () => {
         tray.setContextMenu(Menu.buildFromTemplate(template));
     });
 });
+
+export default function getTray() {
+    return tray;
+}

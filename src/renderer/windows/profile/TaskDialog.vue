@@ -1,5 +1,5 @@
 <template>
-	<v-dialog v-model="value" hide-overlay width="500" style="max-height: 100%">
+	<v-dialog v-model="value" persistent hide-overlay width="500" style="max-height: 100%">
 		<v-toolbar dark tabs color="grey darken-3">
 			<v-toolbar-title>{{$t('task.manager')}}</v-toolbar-title>
 			<v-spacer></v-spacer>
@@ -17,13 +17,13 @@
 							{{item.status === 'successed' ? 'check' : item.status === 'cancelled' ? 'stop' :
 							'error_outline'}}
 						</v-icon>
-						<v-progress-circular style="padding-right: 5px;" v-if="item.status === 'running' && item.total === -1"
-						  small :size="20" :width="3" indeterminate color="white" class="mb-0"></v-progress-circular>
+						<v-progress-circular v-if="item.status === 'running'" small :size="20" :value="item.progress / item.total * 100"
+						  :width="3" :indeterminate="item.total === -1" color="white" class="mb-0"></v-progress-circular>
 					</template>
 
 					<template v-slot:label="{ item, open }">
 						<div style="padding: 5px 0px;">
-							{{item.localText}}
+							{{$t(item.path, item.arguments || {})}}
 							<span style="color: grey; font-size: 12px; font-style: italic; ">{{item.time}}</span>
 							<div style="color: grey; font-size: 12px; font-style: italic; ">{{item.message}}</div>
 							<v-progress-linear v-if="item.status === 'running' && item.total !== -1" :height="10" :value="item.progress / item.total * 100"
@@ -33,12 +33,6 @@
 				</v-treeview>
 			</v-card-text>
 		</v-card>
-		<v-snackbar v-model="snackbar" :bottom="true">
-			DONE
-			<v-btn color="pink" flat @click="snackbar = false">
-				Close
-			</v-btn>
-		</v-snackbar>
 
 	</v-dialog>
 </template>
@@ -48,7 +42,6 @@
 
 export default {
   data: () => ({
-    snackbar: false,
     tree: [],
     opened: [],
     active: 0,
@@ -60,14 +53,10 @@ export default {
     }
   },
   computed: {
-    all() {
-      return this.$repo.state.task.tasks;
-    },
+    all() { return this.$repo.state.task.tasks; },
   },
-  mounted() {
-  },
-  methods: {
-  },
+
+
 }
 </script>
 

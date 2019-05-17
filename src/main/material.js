@@ -1,5 +1,7 @@
 
 import { ipcMain } from 'electron';
+import { resolve } from 'path';
+import getTray from './trayManager';
 
 export default function setup(context, store) {
     /**
@@ -7,21 +9,9 @@ export default function setup(context, store) {
      */
     let profileRef;
 
-    function createLoginWindow() {
-        context.createWindow('login', {
-            width: 300,
-            height: 480,
-            resizable: false,
-            frame: false,
-            transparent: true,
-            hasShadow: false,
-            nodeIntegration: false,
-        });
-    }
-
     function createProfileWindow() {
         profileRef = context.createWindow('index.html?window=profile', {
-            title: 'profile',
+            title: 'VoxeLauncher',
             width: 770,
             height: 580,
             resizable: false,
@@ -29,8 +19,14 @@ export default function setup(context, store) {
             transparent: true,
             hasShadow: false,
             maximizable: false,
-            icon: './static/apple-touch-icon.png',
+            icon: resolve(__static, 'apple-touch-icon.png'),
             // nodeIntegration: false,
+        });
+        ipcMain.on('task-successed', (id) => {
+            profileRef.webContents.send('task-successed', id);
+        });
+        ipcMain.on('task-failed', (id) => {
+            profileRef.webContents.send('task-failed', id);
         });
         ipcMain.on('minecraft-exit', (status) => {
             profileRef.webContents.send('minecraft-exit', status);
@@ -42,22 +38,33 @@ export default function setup(context, store) {
             }
         });
     }
+    function onWindowOpen(event, id) {
+        switch (id) {
+            case 'profile': createProfileWindow(); break;
+            default:
+        }
+    }
+    function onMinecraftExit() {
+        const { showLog, hideLauncher } = store.getters['profile/current'];
+        if (hideLauncher) { profileRef.show(); }
+    }
 
-    ipcMain
-        .on('window-open', (event, id) => {
-            switch (id) {
-                case 'profile': createProfileWindow(); break;
-                case 'login': createLoginWindow(); break;
-                default:
-            }
-        })
-        .on('minecraft-exit', () => {
-            const { showLog, hideLauncher } = store.getters['profile/current'];
-            if (hideLauncher) { profileRef.show(); }
-        })
-        .on('window-close', (event) => {
-            // event.sender.close();
-        });
+    const tray = getTray();
+    tray.on('click', () => {
+        if (!profileRef.isFocused()) {
+            profileRef.focus();
+        }
+    });
+    tray.on('double-click', () => {
+        if (!profileRef.isVisible()) {
+            profileRef.show();
+        } else {
+            profileRef.hide();
+        }
+    });
+
+    ipcMain.on('window-open', onWindowOpen)
+        .on('minecraft-exit', onMinecraftExit);
 
     createProfileWindow();
 
@@ -65,6 +72,9 @@ export default function setup(context, store) {
         requestFocus() {
         },
         dispose() {
+            profileRef.close();
+            ipcMain.removeListener('window-open', onWindowOpen);
+            ipcMain.removeListener('minecraft-exit-open', onMinecraftExit);
         },
     };
 }

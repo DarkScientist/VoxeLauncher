@@ -90,10 +90,12 @@ const mod = {
     ...base,
     actions: {
         load(context) {
-            return context.dispatch('refresh');
+            context.dispatch('refresh');
         },
 
         async refresh(context) {
+            const taskId = await context.dispatch('task/spawn', 'refreshResource', { root: true });
+
             const modsDir = context.rootGetters.path('mods');
             const resourcepacksDir = context.rootGetters.path('resourcepacks');
             await ensureDir(modsDir);
@@ -102,6 +104,8 @@ const mod = {
             const resourcePacksFiles = await fs.readdir(resourcepacksDir);
 
             const touched = {};
+
+            let finished = 0;
             async function reimport(file) {
                 try {
                     const hash = await readHash(file);
@@ -120,17 +124,19 @@ const mod = {
                         resource.path = file;
 
                         await context.dispatch('setPersistence', { path: paths.join('resources', `${hash}.json`), data: resource }, { root: true });
-
+                        finished += 1;
+                        context.dispatch('task/update', { id: taskId, progress: finished }, { root: true });
                         return resource;
                     }
                 } catch (e) {
+                    finished += 1;
+                    context.dispatch('task/update', { id: taskId, progress: finished }, { root: true });
+
                     console.error(`Cannot resolve resource file ${file}.`);
                     console.error(e);
                 }
                 return undefined;
             }
-            const resources = (await Promise.all(modsFiles.map(file => context.rootGetters.path('mods', file)).concat(resourcePacksFiles.map(file => context.rootGetters.path('resourcepacks', file))).map(reimport)))
-                .filter(resource => resource !== undefined);
 
             const metaFiles = await context.dispatch('readFolder', 'resources', { root: true });
             for (const metaFile of metaFiles.map(f => context.rootGetters.path('resources', f))) {
@@ -138,9 +144,15 @@ const mod = {
                     await fs.unlink(metaFile);
                 }
             }
+
+            const allPromises = modsFiles.map(file => context.rootGetters.path('mods', file)).concat(resourcePacksFiles.map(file => context.rootGetters.path('resourcepacks', file))).map(reimport);
+            context.dispatch('task/update', { id: taskId, progress: 0, total: allPromises.length }, { root: true });
+
+            const resources = (await Promise.all(allPromises)).filter(resource => resource !== undefined);
             if (resources.length > 0) {
                 context.commit('resources', resources);
             }
+            context.dispatch('task/finish', { id: taskId }, { root: true });
         },
 
         save(context, { mutation, object }) { },
@@ -198,7 +210,7 @@ const mod = {
         async import(context, { path, metadata = {} }) {
             requireString(path);
 
-            const importTaskContext = await context.dispatch('task/createShallow', { name: 'resource.import' }, { root: true });
+            const handle = await context.dispatch('task/spawn', { name: 'resource.import' }, { root: true });
             const root = context.rootState.root;
 
             let data;
@@ -250,7 +262,7 @@ const mod = {
                 ...metadata,
             };
 
-            importTaskContext.update(1, 4, 'resource.import.checkingfile');
+            context.dispatch('task/update', { id: handle, progress: 1, total: 4, message: 'resource.import.checkingfile' }, { root: true });
 
             // take hash of dir or file
             await ensureDir(paths.join(root, 'resources'));
@@ -258,12 +270,12 @@ const mod = {
 
             // if exist, abort
             if (existsSync(metaFile)) {
-                importTaskContext.finish('resource.import.existed');
+                context.dispatch('task/finish', { id: handle }, { root: true });
                 return undefined;
             }
 
             // use parser to parse metadata
-            importTaskContext.update(2, 4, 'resource.import.parsing');
+            context.dispatch('task/update', { id: handle, progress: 2, total: 4, message: 'resource.import.parsing' }, { root: true });
 
             const resource = await parseResource(path, hash, ext, data, source);
 
@@ -275,7 +287,7 @@ const mod = {
 
             resource.path = dataFile;
 
-            importTaskContext.update(3, 4, 'resource.import.storing');
+            context.dispatch('task/update', { id: handle, progress: 3, total: 4, message: 'resource.import.storing' }, { root: true });
             // write resource to disk
             if (isDir) {
                 await ensureDir(dataFile);
@@ -285,11 +297,10 @@ const mod = {
                 await fs.writeFile(dataFile, data);
             }
 
-            importTaskContext.update(4, 4, 'resource.import.update');
+            context.dispatch('task/update', { id: handle, progress: 4, total: 4, message: 'resource.import.update' }, { root: true });
             // store metadata to disk
             await fs.writeFile(paths.join(root, 'resources', `${hash}.json`), JSON.stringify(resource, undefined, 4));
-            importTaskContext.finish();
-            console.log(dataFile);
+            context.dispatch('task/finish', { id: handle }, { root: true });
 
             context.commit('resource', resource);
 

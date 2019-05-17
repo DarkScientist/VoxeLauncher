@@ -1,6 +1,7 @@
 <template>
 	<v-app style="background: transparent;">
-		<v-layout fill-height>
+		<vue-particles v-if="loading" color="#dedede" style="position: absolute; width: 100%; height: 100%;"></vue-particles>
+		<v-layout v-else fill-height>
 			<v-navigation-drawer v-model="drawer" mini-variant stateless dark style="border-radius: 2px 0 0 2px;"
 			  class="moveable">
 				<v-toolbar flat class="transparent">
@@ -14,12 +15,17 @@
 				</v-toolbar>
 				<v-list class="non-moveable">
 					<v-divider dark style="display: block !important;"></v-divider>
-					<v-list-tile @click="goHome" :disable=true>
+					<v-list-tile :disabled="!logined" @click="goHome">
 						<v-list-tile-action>
 							<v-icon>home</v-icon>
 						</v-list-tile-action>
 					</v-list-tile>
-					<v-list-tile avatar @click="goUser">
+					<v-list-tile :disabled="!logined" @click="goProfiles">
+						<v-list-tile-action>
+							<v-icon>apps</v-icon>
+						</v-list-tile-action>
+					</v-list-tile>
+					<v-list-tile :disabled="!logined" avatar @click="goUser">
 						<v-list-tile-avatar>
 							<v-icon dark>person</v-icon>
 						</v-list-tile-avatar>
@@ -40,6 +46,7 @@
 					<transition name="fade-transition" mode="out-in">
 						<router-view></router-view>
 					</transition>
+					<task-notify></task-notify>
 				</v-card>
 			</v-layout>
 		</v-layout>
@@ -49,16 +56,19 @@
 <script>
 import logo from '@/assets/minecraft.logo.png'
 import defaultSkin from 'universal/defaultSkin';
+import TaskNotify from './TaskNotify';
 
 export default {
   data: () => ({
     logo,
+    loading: false, // disable for now, but it'll be abled if the loading process is too slow..
     tab: '',
     drawer: true,
     defaultSkin: { data: defaultSkin, slim: false },
     localHistory: [],
     timeTraveling: false,
   }),
+  components: { TaskNotify },
   computed: {
     username() {
       return this.$repo.state.user.name;
@@ -77,6 +87,9 @@ export default {
     });
   },
   mounted() {
+    this.$electron.ipcRenderer.once('vuex-sync', () => {
+      this.loading = false;
+    });
     if (!this.logined) {
       this.$router.push('/login');
     }
@@ -87,6 +100,9 @@ export default {
       this.$store.dispatch('exit');
     },
     goHome() {
+      this.$router.replace('/');
+    },
+    goProfiles() {
       this.$router.replace('/profiles');
     },
     goSetting() {
@@ -96,6 +112,9 @@ export default {
       this.$router.replace('/user');
     },
     goBack() {
+      if (!this.login && this.$route.path === '/login') {
+        return;
+      }
       this.timeTraveling = true;
       if (this.localHistory.length !== 0) {
         const before = this.localHistory.pop();

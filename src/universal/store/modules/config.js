@@ -1,30 +1,8 @@
 import { app } from 'electron';
 import locales from 'static/locales';
+import { autoUpdater } from 'electron-updater';
+import Task from 'treelike-task';
 import base from './config.base';
-import BaseFormatter from '../helpers/formater';
-
-const baseFormatter = new BaseFormatter();
-
-let currentDictionary = locales.en;
-const fallbackDictionary = locales.en;
-function query(key, dict = currentDictionary) {
-    const path = key.split('.');
-    let o;
-    for (const partial of path) {
-        if (dict[partial]) {
-            o = dict[partial];
-        } else {
-            if (dict === fallbackDictionary) {
-                return key;
-            }
-            return query(key, fallbackDictionary);
-        }
-    }
-    if (typeof o === 'object') {
-        return o[''] || key;
-    }
-    return o;
-}
 
 /**
  * @type {import('./config').ConfigModule}
@@ -35,7 +13,6 @@ const mod = {
         ...base.mutations,
         locale(state, language) {
             state.locale = language;
-            currentDictionary = locales[language];
         },
     },
     actions: {
@@ -44,6 +21,9 @@ const mod = {
             context.commit('config', {
                 locale: data.locale || app.getLocale(),
                 locales: Object.keys(locales),
+                autoInstallOnAppQuit: data.autoInstallOnAppQuit,
+                autoDownload: data.autoDownload,
+                allowPrerelease: data.allowPrerelease,
             });
         },
         save(context) {
@@ -54,16 +34,26 @@ const mod = {
             return Promise.resolve(locales[locale]);
         },
 
-        t: {
-            root: true,
-            handler(context, payload) {
-                if (typeof payload === 'string') {
-                    return query(payload);
-                }
+        quitAndInstall(context) {
+            if (context.state.readyToUpdate) {
+                autoUpdater.quitAndInstall();
+            }
+        },
 
-                const template = query(payload.key);
-                return baseFormatter.interpolate(template, payload.value);
-            },
+        async checkUpdate({ dispatch, commit }) {
+            const task = Task.create('checkUpdate', async (context) => {
+                const info = await autoUpdater.checkForUpdates();
+                commit('updateInfo', info.updateInfo);
+                return info;
+            });
+            const id = await dispatch('task/execute', task, { root: true });
+            return id;
+        },
+
+        downloadUpdate(context) {
+            if (!context.state.autoDownload) {
+                autoUpdater.downloadUpdate();
+            }
         },
     },
 };

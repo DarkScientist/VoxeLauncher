@@ -1,24 +1,9 @@
 import { Task } from 'treelike-task';
 import { v4 } from 'uuid';
 
+import { ipcMain } from 'electron';
 import base from './task.base';
-
-class ShallowTask {
-    constructor(context, id) {
-        this.context = context;
-        this.id = id;
-    }
-
-    update(progress, total, message) {
-        this.context.commit('update', {
-            id: this.id, progress, total, message,
-        });
-    }
-
-    finish(error) {
-        this.context.commit('finish', { id: this.id, error });
-    }
-}
+import { requireString } from '../helpers/utils';
 
 class TaskWatcher {
     constructor() {
@@ -93,16 +78,39 @@ const idToTask = {};
 const mod = {
     ...base,
     actions: {
-        /**
-         * 
-         * @param {{name:string}} payload 
-         */
-        createShallow(context, { name }) {
+        spawn(context, name) {
+            requireString(name);
             const id = v4();
-            context.commit('create', { name, id });
-            return new ShallowTask(context, id);
-        },
+            const translate = (node) => {
+                node.localText = context.rootGetters.t(node.path, node.arguments || {});
+            };
 
+            /**
+            * @type {import('treelike-task').TaskNode}
+            */
+            const node = {
+                _internalId: id,
+                name,
+                total: -1,
+                progress: -1,
+                status: 'running',
+                path: name,
+                tasks: [],
+                errors: [],
+                message: '',
+            };
+            // translate(node);
+            context.commit('hook', { task: node, id });
+            return id;
+        },
+        update(context, payload) {
+            requireString(payload.id);
+            taskWatcher.update(payload.id, payload);
+        },
+        finish(context, payload) {
+            requireString(payload.id);
+            taskWatcher.status(payload.id, 'successed');
+        },
         cancel(context, uuid) {
             const task = idToTask[uuid];
             if (task) { task.cancel(); }
@@ -116,9 +124,10 @@ const mod = {
         * @param {Task} task 
         */
         execute(context, task) {
-            const name = task.root.name;
-            if (nameToTask[name]) {
-                return nameToTask[name].promise;
+            const key = JSON.stringify({ name: task.root.name, arguments: task.root.arguments });
+
+            if (nameToTask[key]) {
+                return nameToTask[key].id;
             }
 
             const translate = (node) => {
@@ -134,7 +143,7 @@ const mod = {
                 _internalId += 1;
 
                 child.time = new Date().toLocaleTimeString();
-                translate(child);
+                // translate(child);
 
                 taskWatcher.child(parent._internalId, child);
             });
@@ -145,15 +154,18 @@ const mod = {
             });
             task.onFinish((result, node) => {
                 if (task.root === node) {
-                    delete nameToTask[name];
+                    ipcMain.emit('task-successed', node._internalId);
+                    delete nameToTask[key];
                 }
 
                 taskWatcher.status(node._internalId, 'successed');
             });
             task.onError((result, node) => {
                 if (task.root === node) {
-                    delete nameToTask[name];
+                    ipcMain.emit('task-failed', node._internalId);
+                    delete nameToTask[key];
                 }
+
 
                 taskWatcher.status(node._internalId, 'failed');
             });
@@ -169,7 +181,7 @@ const mod = {
 
             task.promise = promise;
 
-            nameToTask[name] = task;
+            nameToTask[key] = task;
             idToTask[uuid] = task;
 
             return uuid;

@@ -1,5 +1,5 @@
 import {
-    Forge, LiteLoader, Version, ForgeWebPage,
+    Forge, Version, ForgeWebPage,
 } from 'ts-minecraft';
 import { promises as fs, createReadStream } from 'fs';
 
@@ -45,9 +45,10 @@ const mod = {
                         id: resolved.id,
                         jar: resolved.jar,
                         minecraft,
+                        folder: versionId,
                     });
                 } catch (e) {
-                    console.error('An error occured during refresh local versions');
+                    console.error(`An error occured during refresh local version ${versionId}`);
                     console.error(e);
                 }
             }

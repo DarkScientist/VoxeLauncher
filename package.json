@@ -1,7 +1,7 @@
 {
-    "name": "ilauncher",
-    "productName": "ILauncher",
-    "version": "0.0.0",
+    "name": "voxelauncher",
+    "productName": "VoxeLauncher",
+    "version": "0.0.1-alpha.1",
     "typings": "typings.d.ts",
     "author": "cijhn@hotmail.com",
     "description": "A great minecraft launcher in the feature",
@@ -9,7 +9,7 @@
     "main": "./dist/electron/main.js",
     "repository": {
         "type": "git",
-        "url": "https://github.com/InfinityStudio/ILauncher.git"
+        "url": "https://github.com/ci010/VoxeLauncher.git"
     },
     "scripts": {
         "build": "node scripts/build.js && electron-builder",
@@ -23,15 +23,22 @@
         "lint:fix": "eslint --ext .js,.vue --fix src",
         "test": "npm run pack &&  mocha test/e2e",
         "e2e": "node test/test-runner.js && mocha dist/test/unit.js",
-        "install:native": "cross-env npm_config_runtime=electron electron-rebuild",
+        "install:native": "cross-env npm_config_runtime=electron electron-builder install-app-deps",
         "postinstall": "npm run install:native"
     },
     "build": {
-        "productName": "ilauncher",
-        "appId": "net.infstudio.ilauncher",
+        "productName": "voxelauncher",
+        "appId": "ci010.voxelauncher",
         "directories": {
             "output": "build"
         },
+        "publish": [
+            {
+                "provider": "github",
+                "owner": "ci010",
+                "repo": "VoxeLauncher"
+            }
+        ],
         "files": [
             "dist/electron/**/*"
         ],
@@ -50,11 +57,41 @@
                 }
             ]
         },
-        "mac": {},
-        "win": {},
-        "linux": {}
+        "mac": {
+            "icon": "build/icons/icon.icns"
+        },
+        "win": {
+            "icon": "build/icons/icon.ico",
+            "target": [
+                {
+                    "target": "nsis",
+                    "arch": [
+                        "x64",
+                        "ia32"
+                    ]
+                },
+                {
+                    "target": "zip",
+                    "arch": [
+                        "x64",
+                        "ia32"
+                    ]
+                },
+                {
+                    "target": "portable",
+                    "arch": [
+                        "x64",
+                        "ia32"
+                    ]
+                }
+            ]
+        },
+        "linux": {
+            "icon": "build/icons"
+        }
     },
     "dependencies": {
+        "electron-updater": "^4.0.6",
         "fast-html-parser": "^1.0.1",
         "file-type": "^10.11.0",
         "got": "^9.6.0",
@@ -62,7 +99,7 @@
         "lzma-native": "^4.0.3",
         "maven-artifact-version": "0.0.1",
         "treelike-task": "^0.0.13",
-        "ts-minecraft": "^5.0.13-beta",
+        "ts-minecraft": "^5.0.15-beta",
         "uuid": "^3.2.1",
         "vue": "^2.6.10",
         "vue-electron": "^1.0.6",
@@ -70,7 +107,7 @@
         "vue-router": "^3.0.1",
         "vuetify": "^1.5.13",
         "vuex": "^3.0.1",
-        "yauzlw": "0.0.3",
+        "yauzlw": "^0.0.5",
         "yazl": "^2.5.1"
     },
     "devDependencies": {
@@ -85,7 +122,6 @@
         "electron-builder": "^20.40.2",
         "electron-debug": "^1.4.0",
         "electron-devtools-installer": "^2.2.0",
-        "electron-rebuild": "^1.8.4",
         "eslint": "^5.5.0",
         "babel-eslint": "^10.0.1",
         "eslint-config-airbnb-base": "^13.1.0",
